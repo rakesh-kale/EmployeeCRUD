@@ -1,36 +1,35 @@
-using WEBAPICRUD.Models;
 using Microsoft.EntityFrameworkCore;
-
+using WEBAPICRUD.Models;
+using WEBAPICRUD.Repository.Implementation;
+using WEBAPICRUD.Repository.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var provider = builder.Services.BuildServiceProvider();
-var config = provider.GetRequiredService<IConfiguration>();
-builder.Services.AddDbContext<MyDbContext>(item => item.UseSqlServer(config.GetConnectionString("dbcs")));
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        p => p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
 
 var app = builder.Build();
 
+app.UseCors("AllowAll");
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
-
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapControllers();
 
